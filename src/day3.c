@@ -33,19 +33,16 @@ int line_pn_sum(
         exit(1);
     }
 
-    const char *nptr = buffer[1];
     int nptr_ofs = 0, sptr_ofs = 0;
     unsigned long sum = 0, value = 0;
 
-    while (*nptr && (regexec(&num_reg, nptr, 1, &num_match, 0) == 0))
+    while (regexec(&num_reg, buffer[1][nptr_ofs], 1, &num_match, 0) == 0)
     {
-        bool is_part = false;
-        value = atoi(&nptr[num_match.rm_so]);
+        value = atoi(&buffer[1][nptr_ofs + num_match.rm_so]);
 
         for (int rel_idx = 0; rel_idx < LINES; rel_idx++)
         {
-            sptr_ofs = nptr_ofs + num_match.rm_so;
-            sptr_ofs = (sptr_ofs > 0) ? sptr_ofs - 1 : sptr_ofs;
+            sptr_ofs = nptr_ofs + num_match.rm_so - (int)(sptr_ofs > 0);
 
             if (
                 (regexec(&sym_reg, &buffer[rel_idx][sptr_ofs], 1, &sym_match, 0) == 0) &&
@@ -57,7 +54,6 @@ int line_pn_sum(
             }
         }
         nptr_ofs += num_match.rm_eo;
-        nptr += num_match.rm_eo;
     }
 
     regfree(&num_reg);
