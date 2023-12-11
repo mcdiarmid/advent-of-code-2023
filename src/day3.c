@@ -7,7 +7,7 @@
 
 #define LINEWIDTH 256
 #define LINES 3
-
+// #define DEBUG
 
 int line_pn_sum(
     const char buffer[LINES][LINEWIDTH]
@@ -36,21 +36,37 @@ int line_pn_sum(
     int nptr_ofs = 0, sptr_ofs = 0;
     unsigned long sum = 0, value = 0;
 
-    while (regexec(&num_reg, buffer[1][nptr_ofs], 1, &num_match, 0) == 0)
+#ifdef DEBUG
+    printf("BUFFER:\n");
+    for (int rel_idx = 0; rel_idx < LINES; rel_idx++)
+    {
+        if (!rel_idx)
+        {
+            printf("  ");
+            for (int z=0; z<strlen(buffer[1]); z++)
+                printf("%d",z%10);
+            printf("\n");
+        }
+        printf("%d %s\n", rel_idx, buffer[rel_idx]);
+    }
+    printf("\n");
+#endif
+
+    while (regexec(&num_reg, &buffer[1][nptr_ofs], 1, &num_match, 0) == 0)
     {
         value = atoi(&buffer[1][nptr_ofs + num_match.rm_so]);
+        sptr_ofs = nptr_ofs + num_match.rm_so - (int)(nptr_ofs + num_match.rm_so > 0);
 
         for (int rel_idx = 0; rel_idx < LINES; rel_idx++)
         {
-            sptr_ofs = nptr_ofs + num_match.rm_so - (int)(sptr_ofs > 0);
-
-            if (
-                (regexec(&sym_reg, &buffer[rel_idx][sptr_ofs], 1, &sym_match, 0) == 0) &&
-                ((sym_match.rm_so + sptr_ofs) <= (num_match.rm_eo + nptr_ofs))
-            )
+            int search_result = regexec(&sym_reg, &buffer[rel_idx][sptr_ofs], 1, &sym_match, 0);
+            if (search_result == 0)
             {
-                sum += value;
-                break;
+                if ((sptr_ofs + sym_match.rm_so) <= (nptr_ofs + num_match.rm_eo))
+                {
+                    sum += value;
+                    break;
+                }
             }
         }
         nptr_ofs += num_match.rm_eo;
