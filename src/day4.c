@@ -56,8 +56,8 @@ uint32_t parse_scorecard(const char* card)
     }
 
     free(winners);
-    printf("\nCard Score: %d\n\n", (1 << matching_nums));
-    return (1UL << (matching_nums-1));
+    printf("\nCard Matches: %d\n\n", matching_nums);
+    return matching_nums;
 }
 
 int main(int argc, char* argv[])
@@ -78,10 +78,21 @@ int main(int argc, char* argv[])
 
     // Iterate through input file lines
     char line[256];
+    int card_scores[256] = { 0 };
+    int idx = 0;
     uint32_t score = 0;
     while (fgets(line, sizeof(line), fileptr)) {
         line[strcspn(line, "\n")] = 0;
-        score += parse_scorecard(line);
+#ifdef PART1
+        score += 1UL << (parse_scorecard(line) - 1);
+#else
+        uint32_t score_i = parse_scorecard(line);
+        card_scores[idx]++;
+        for (uint32_t j = 1; j <= score_i; j++)
+            card_scores[idx + j] += card_scores[idx];
+        printf("%d %d %d\n", idx, card_scores[idx], score + card_scores[idx]);
+        score += card_scores[idx++];
+#endif
     }
     printf("Total: %u\n", score);
 
